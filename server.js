@@ -53,31 +53,31 @@ app.get("/pdd/", (req, res) => {
   console.log(arr)
 
 })
-
+//регистрация...
 app.post('/user/register', (req, res) => {
   db
-      .collection('pddcollection')
-      .findOne( { userName:req.body.userName } )
+      .collection('pdd_collection')
+      .findOne( { name:req.body.name } )
       .then(doc => {
         if(doc){
-          console.log(1, `Имя ${req.body.userName} занято`)
+          console.log(1, `Имя ${req.body.name} занято`)
           res
               .status(409)
               .json('имя занято')
         } else {
-          console.log(2, `Имя ${req.body.userName} свободно`)
+          console.log(2, `Имя ${req.body.name} свободно`)
           db
-              .collection('pddcollection')
+              .collection('pdd_collection')
               .insertOne(req.body)
               .then((result)=>{
-                db.collection('pddcollection').updateOne({ _id: result.insertedId }, {
+                db.collection('pdd_collection').updateOne({ _id: result.insertedId }, {
                   $set: {
                     pathImg: '',
                     refreshToken: '',
                     accessToken: '',
                     creatDat: new Date(),
-                    tasksList:[],
-                    notes:[]
+                    starQuestions:[],
+                    errorQuestions:[]
                   } }) //добавление токена и даты создания
                 res
                     .status(201)
@@ -87,3 +87,4 @@ app.post('/user/register', (req, res) => {
       })
       .catch(()=> handleError(res, 'Something went wrong.'))
 })
+//...регистрация
