@@ -37,24 +37,24 @@ const handleError = (res, error) => {
   res.status(500).json({ error })
 }
 
-app.get("/pdd/", (req, res) => {
-
-  let arr = []
-
-  db
-      .collection("pddcollection")
-      .find()
-      .forEach(e=>arr.push(e))
-      .then((doc)=>{
-          res
-              .status(200)
-              .json(arr)
-        })
-      .catch(()=> handleError(res, 'Something went wrong.'))
-
-  console.log(arr)
-
-})
+// app.get("/pdd/", (req, res) => {
+//
+//   let arr = []
+//
+//   db
+//       .collection("pddcollection")
+//       .find()
+//       .forEach(e=>arr.push(e))
+//       .then((doc)=>{
+//           res
+//               .status(200)
+//               .json(arr)
+//         })
+//       .catch(()=> handleError(res, 'Something went wrong.'))
+//
+//   console.log(arr)
+//
+// })
 //регистрация...
 app.post('/user/register', (req, res) => {
   db
@@ -119,7 +119,7 @@ app.post('/user/login', async (req, res) => {
             errorQuestions:user.errorQuestions,
         };
         //
-        res.cookie('refreshToken', refreshToken, { //ставим на фронт refreshToken
+        res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
             maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
             httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
             secure: true, // Cookie будут отправляться только по HTTPS
@@ -135,6 +135,70 @@ app.post('/user/login', async (req, res) => {
 
 });
 //...авторизация
+
+//получение данных акка...
+app.get('/user/:id', async (req, res) => {
+
+    const accessToken = req.headers['authorization'];
+    const cookies = Object.assign({}, req.cookies);
+    const refreshToken = cookies.refreshToken
+
+    try{
+        const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
+        if(!user) return res.status(400).json({message: 'Пользователь не найден'})
+
+        console.log(user)
+
+        if(verifyJWT(accessToken, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessToken')){
+
+        } else {
+            if(verifyJWT(refreshToken, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
+                console.log(`refreshToken GOOD`)
+                //тут смена токенов!!!
+                const accessToken = generateAccessToken(user._id, user.email);
+                const refreshToken = generateRefreshToken(user._id, user.email);
+                await db.collection('pdd_collection').updateOne({_id: new ObjectId (req.params.id)},
+                    { $set: { accessToken: accessToken, refreshToken: refreshToken } }
+                )
+
+                const responseUser = {
+                        name: user.name,
+                        accessToken: accessToken,
+                        id: user._id,
+                        // pathImg: user.pathImg,
+                        starQuestions:user.starQuestions,
+                        errorQuestions:user.errorQuestions,
+                }
+
+                res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
+                    maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
+                    httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
+                    secure: true, // Cookie будут отправляться только по HTTPS
+                    sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
+                })
+                // res.status(200).json(responseUser)
+                return res.json(responseUser)
+            } else{
+                //refreshToken неверен, нужно перелогиниться
+                return res.status(400).json({ message:'Токен не совпадает'})
+            }
+        }
+
+        const responseUser = {
+            name: user.name,
+            accessToken: accessToken,
+            id: user._id,
+            // pathImg: user.pathImg,
+            starQuestions:user.starQuestions,
+            errorQuestions:user.errorQuestions,
+        }
+        res.status(200).json(responseUser)
+    } catch (error) {
+        console.error('Ошибка при входе:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+})
+//...получение данных акка
 
 //Добавление ошибочного вопроса в список ошибок
 app.patch('/user/pusherror/:id', async (req, res)=>{
@@ -171,7 +235,7 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
                 { $set: { accessToken: accessToken, refreshToken: refreshToken } }
             )
 
-            res.cookie('refreshToken', refreshToken, { //ставим на фронт refreshToken
+            res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
                 maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
                 httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
                 secure: true, // Cookie будут отправляться только по HTTPS
@@ -181,7 +245,7 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
             return res.json({accessToken:accessToken})
         } else {
 
-            res.cookie('refreshToken', '', { //ставим на фронт refreshToken
+            res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
                 maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
                 httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
                 secure: true, // Cookie будут отправляться только по HTTPS
