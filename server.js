@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require('cors')
 const { connectToDb, getDb } = require("./db");
 const cookieParser = require("cookie-parser");
+const {generateAccessToken, generateRefreshToken} = require("./generToken");
 
 const PORT = 3000;
 
@@ -88,3 +89,46 @@ app.post('/user/register', (req, res) => {
       .catch(()=> handleError(res, 'Something went wrong.'))
 })
 //...регистрация
+
+//Авторизация...
+app.post('/user/login', async (req, res) => {
+
+    const { name, password } = req.body;
+
+    console.log(name, password);
+
+    try{
+        const user = await db.collection('pdd_collection').findOne({ name: name, password: password });
+        if(!user) return res.status(400).json({ message: 'Пользователь не найден' })
+
+        const accessToken = generateAccessToken(user._id, name);
+        const refreshToken = generateRefreshToken(user._id, name);
+
+        await db.collection('pdd_collection').updateOne(
+            { _id: user._id },
+            { $set: { accessToken: accessToken, refreshToken: refreshToken } }
+        );
+        //
+        const responseData = {
+            name: user.name,
+            accessToken: accessToken,
+            id: user._id,
+            pathImg: user.pathImg,
+        };
+        //
+        res.cookie('refreshToken', refreshToken, { //ставим на фронт refreshToken
+            maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
+            httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
+            secure: true, // Cookie будут отправляться только по HTTPS
+            sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
+        })
+        //
+        res.status(200).json(responseData);
+
+    } catch (e) {
+        console.error('Ошибка при входе:', e);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+
+});
+//...авторизация
