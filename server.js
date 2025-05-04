@@ -141,13 +141,15 @@ app.get('/user/:id', async (req, res) => {
 
     const accessToken = req.headers['authorization'];
     const cookies = Object.assign({}, req.cookies);
-    const refreshToken = cookies.refreshToken
+    const refreshToken = cookies.PDD_refreshToken
+
+    console.log(`accessToken: ${accessToken}\nrefreshToken: ${refreshToken}`);
 
     try{
         const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
         if(!user) return res.status(400).json({message: 'Пользователь не найден'})
 
-        console.log(user)
+        console.log(`userData-OK`)
 
         if(verifyJWT(accessToken, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessToken')){
 
@@ -199,6 +201,60 @@ app.get('/user/:id', async (req, res) => {
     }
 })
 //...получение данных акка
+
+//удаление Cookie с фронта при выходе из аккаунта
+app.post('/del-cookie', (req, res) => {
+
+    res.cookie('PDD_refreshToken', '', {
+        maxAge: -1, // Время жизни cookie в миллисекундах (15 минут)
+        httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
+        secure: true, // Cookie будут отправляться только по HTTPS
+        sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
+    });
+    res.send('Cookie has been set!');
+    console.log('DELETE_COOKIE')
+});
+//удаление Cookie с фронта при выходе из аккаунта
+
+//Удаление аккаунта:
+app.delete('/user/delete/:id', (req, res) => {
+
+    const accessTokenFont = req.headers['authorization'];
+    const cookies = Object.assign({}, req.cookies);
+    const refreshTokenFront = cookies.PDD_refreshToken
+
+    const user = db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
+    console.log('delete user')
+    if(!user) return res.status(400).json({message: 'Пользователь не найден'})
+
+    if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')
+        && verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
+
+        res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
+            maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
+            httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
+            secure: true, // Cookie будут отправляться только по HTTPS
+            sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
+        })
+        db
+            .collection('pdd_collection')
+            .deleteOne({ _id: new ObjectId(req.params.id) })
+            .then((result)=>{
+                res
+                    .status(200)
+                    .json(result)
+            })
+    } else {
+        res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
+            maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
+            httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
+            secure: true, // Cookie будут отправляться только по HTTPS
+            sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
+        })
+        res.status(401).json(`result`)
+    }
+})
+//...удаление аккаунта
 
 //Добавление ошибочного вопроса в список ошибок
 app.patch('/user/pusherror/:id', async (req, res)=>{
