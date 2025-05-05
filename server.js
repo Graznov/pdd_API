@@ -62,7 +62,8 @@ app.post('/user/register', (req, res) => {
                     accessToken: '',
                     creatDat: new Date(),
                     starQuestions:[],
-                    errorQuestions:[]
+                    errorQuestions:[],
+                    examTiketsStatus:[{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},]
                   } }) //добавление токена и даты создания
                 res
                     .status(201)
@@ -100,6 +101,7 @@ app.post('/user/login', async (req, res) => {
             pathImg: user.pathImg,
             starQuestions:user.starQuestions,
             errorQuestions:user.errorQuestions,
+            examTiketsStatus:user.examTiketsStatus,
         };
         //
         res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
@@ -153,6 +155,8 @@ app.get('/user/:id', async (req, res) => {
                         // pathImg: user.pathImg,
                         starQuestions:user.starQuestions,
                         errorQuestions:user.errorQuestions,
+                        examTiketsStatus:user.examTiketsStatus,
+
                 }
 
                 res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
@@ -176,6 +180,8 @@ app.get('/user/:id', async (req, res) => {
             // pathImg: user.pathImg,
             starQuestions:user.starQuestions,
             errorQuestions:user.errorQuestions,
+            examTiketsStatus:user.examTiketsStatus,
+
         }
         res.status(200).json(responseUser)
     } catch (error) {
