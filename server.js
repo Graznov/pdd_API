@@ -255,13 +255,28 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
     const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
     //
 
+
     //
     if(!user) return res.status(400).json({message: 'Пользователь не найден'})
 
     async function updateBD(){
-        await db
+
+        const arr = await db
+            .collection('pdd_collection')
+            .findOne({_id: new ObjectId (req.params.id)})
+
+        // console.log(arr.errorQuestions)
+        console.log(`retry id: ${arr.errorQuestions.includes(req.body.id)}`)
+        if(!arr.errorQuestions.includes(req.body.id)){
+            await db
             .collection('pdd_collection')
             .updateOne({_id: new ObjectId (req.params.id)}, {$push: {errorQuestions: req.body.id}} )
+        }
+
+            // await db
+            // .collection('pdd_collection')
+            // .updateOne({_id: new ObjectId (req.params.id)}, {$push: {errorQuestions: req.body.id}} )
+
     }
     //
     if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
@@ -372,30 +387,30 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
 //...добавление и удаление вопроса из избранного
 
 //Окраска кнопки правильного или неправильного решенного билета...
-app.patch('/user/tickets/:id', async (req, res)=>{
+// app.patch('/user/tickets/:id', async (req, res)=>{
 
     // const accessTokenFont = req.headers['authorization'];
     // const cookies = Object.assign({}, req.cookies);
     // const refreshTokenFront = cookies.PDD_refreshToken
     // //
-    const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
+    // const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
     //
-    if(!user) return res.status(400).json({message: 'Пользователь не найден'})
+    // if(!user) return res.status(400).json({message: 'Пользователь не найден'})
     //
     //
-    console.log(user)
+    // console.log(user)
 
-    async function updateBD(){
-
-            await db
-                .collection('pdd_collection')
-                .updateOne({_id: new ObjectId (req.params.id)}, {$set: {examTiketsStatus: req.body}} )
-
-    }
+    // async function updateBD(){
+    //
+    //         await db
+    //             .collection('pdd_collection')
+    //             .updateOne({_id: new ObjectId (req.params.id)}, {$set: {examTiketsStatus: req.body}} )
+    //
+    // }
     // //
     // if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
 
-        await updateBD()
+        // await updateBD()
     //
     // } else {
     //
@@ -429,5 +444,5 @@ app.patch('/user/tickets/:id', async (req, res)=>{
     //         return res.status(400).json({ message : 'Токен не совпадает'})
     //     }
     // }
-})
+// })
 //...окраска кнопки правильного или неправильного решенного билета
