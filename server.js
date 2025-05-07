@@ -63,7 +63,7 @@ app.post('/user/register', (req, res) => {
                     creatDat: new Date(),
                     starQuestions:[],
                     errorQuestions:[],
-                    examTiketsStatus:[{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},{red:0, green:0},]
+                    examTiketsStatus:[{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'}]
                   } }) //добавление токена и даты создания
                 res
                     .status(201)
@@ -370,3 +370,64 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
     }
 })
 //...добавление и удаление вопроса из избранного
+
+//Окраска кнопки правильного или неправильного решенного билета...
+app.patch('/user/tickets/:id', async (req, res)=>{
+
+    // const accessTokenFont = req.headers['authorization'];
+    // const cookies = Object.assign({}, req.cookies);
+    // const refreshTokenFront = cookies.PDD_refreshToken
+    // //
+    const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
+    //
+    if(!user) return res.status(400).json({message: 'Пользователь не найден'})
+    //
+    //
+    console.log(user)
+
+    async function updateBD(){
+
+            await db
+                .collection('pdd_collection')
+                .updateOne({_id: new ObjectId (req.params.id)}, {$set: {examTiketsStatus: req.body}} )
+
+    }
+    // //
+    // if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
+
+        await updateBD()
+    //
+    // } else {
+    //
+    //     if(verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
+    //
+    //         await updateBD()
+    //
+    //         const accessToken = generateAccessToken(user._id, user.name);
+    //         const refreshToken = generateRefreshToken(user._id, user.name);
+    //
+    //         await db.collection('pdd_collection').updateOne({_id: new ObjectId (req.params.id)},
+    //             { $set: { accessToken: accessToken, refreshToken: refreshToken } }
+    //         )
+    //
+    //         res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
+    //             maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
+    //             httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
+    //             secure: true, // Cookie будут отправляться только по HTTPS
+    //             sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
+    //         })
+    //
+    //         return res.json({accessToken:accessToken})
+    //     } else {
+    //
+    //         res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
+    //             maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
+    //             httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
+    //             secure: true, // Cookie будут отправляться только по HTTPS
+    //             sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
+    //         })
+    //         return res.status(400).json({ message : 'Токен не совпадает'})
+    //     }
+    // }
+})
+//...окраска кнопки правильного или неправильного решенного билета
