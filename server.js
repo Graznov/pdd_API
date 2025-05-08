@@ -266,21 +266,18 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
             .findOne({_id: new ObjectId (req.params.id)})
 
         // console.log(arr.errorQuestions)
-        console.log(`retry id: ${arr.errorQuestions.includes(req.body.id)}`)
+        console.log(`retry id: ${arr.errorQuestions.includes(req.body.id)}\nbody: ${JSON.stringify(req.body.id)}`)
         if(!arr.errorQuestions.includes(req.body.id)){
             await db
             .collection('pdd_collection')
             .updateOne({_id: new ObjectId (req.params.id)}, {$push: {errorQuestions: req.body.id}} )
         }
 
-            // await db
-            // .collection('pdd_collection')
-            // .updateOne({_id: new ObjectId (req.params.id)}, {$push: {errorQuestions: req.body.id}} )
-
     }
     //
     if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
         await updateBD()
+        return res.status(204).json({ message : 'No Content!'})
     } else {
     //
 
