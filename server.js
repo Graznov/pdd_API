@@ -255,22 +255,28 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
     const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
     //
 
+    console.log(`\n###########\nreq.body: ${JSON.stringify(req.body)}\n#############\n`)
 
-    //
     if(!user) return res.status(400).json({message: 'Пользователь не найден'})
 
     async function updateBD(){
 
-        const arr = await db
-            .collection('pdd_collection')
-            .findOne({_id: new ObjectId (req.params.id)})
+        if(req.body.correct){
+            console.log(`\n###########\nThe right answer\n#############\n`)
+        } else {
+            console.log(`\n###########\nThe wrong answer\n#############\n`)
 
-        // console.log(arr.errorQuestions)
-        console.log(`retry id: ${arr.errorQuestions.includes(req.body.id)}\nbody: ${JSON.stringify(req.body.id)}`)
-        if(!arr.errorQuestions.includes(req.body.id)){
-            await db
-            .collection('pdd_collection')
-            .updateOne({_id: new ObjectId (req.params.id)}, {$push: {errorQuestions: req.body.id}} )
+            const arr = await db
+                .collection('pdd_collection')
+                .findOne({_id: new ObjectId (req.params.id)})
+
+            console.log(`retry id: ${arr.errorQuestions.includes(req.body.id)}\nbody: ${JSON.stringify(req.body)}`)
+
+            if(!arr.errorQuestions.includes(req.body.id)){
+                await db
+                    .collection('pdd_collection')
+                    .updateOne({_id: new ObjectId (req.params.id)}, {$push: {errorQuestions: req.body.id}} )
+            }
         }
 
     }
@@ -283,7 +289,7 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
 
         if(verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
 
-            updateBD()
+            await updateBD()
 
             const accessToken = generateAccessToken(user._id, user.name);
             const refreshToken = generateRefreshToken(user._id, user.name);
