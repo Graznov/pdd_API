@@ -413,6 +413,12 @@ app.patch('/user/settickets/:id', async (req, res)=>{
                 { $set: { [`examTiketsStatus.${req.body.ticketNumber}.color`]: req.body.res } }
             )
 
+        const arr = await db
+            .collection('pdd_collection')
+            .findOne({_id: new ObjectId (req.params.id)})
+
+        console.log(arr.examTiketsStatus)
+
         // const arr = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
         //
         // console.log(`###########\n/user/settickets/:id\narr: ${JSON.stringify(arr.examTiketsStatus)}\n###########\n`)
@@ -422,7 +428,7 @@ app.patch('/user/settickets/:id', async (req, res)=>{
     //
     if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
 
-        await updateBD()
+        updateBD()
 
     } else {
 
