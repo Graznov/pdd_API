@@ -4,6 +4,7 @@ const { connectToDb, getDb } = require("./db");
 const cookieParser = require("cookie-parser");
 const {generateAccessToken, generateRefreshToken, verifyJWT} = require("./generToken");
 const {ObjectId} = require("mongodb");
+const {delCookie, setCookie} = require("./setDelCookies");
 
 const PORT = 3000;
 
@@ -37,6 +38,7 @@ const handleError = (res, error) => {
   res.status(500).json({ error })
 }
 
+const timeRefToken = 604800000 //Время жизни cookie в миллисекундах (7 суток)
 
 //регистрация...
 app.post('/user/register', (req, res) => {
@@ -103,14 +105,9 @@ app.post('/user/login', async (req, res) => {
             errorQuestions:user.errorQuestions,
             examTiketsStatus:user.examTiketsStatus,
         };
-        //
-        res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
-            maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
-            httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-            secure: true, // Cookie будут отправляться только по HTTPS
-            sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-        })
-        //
+
+        setCookie(res, refreshToken, timeRefToken)
+
         res.status(200).json(responseData);
 
     } catch (e) {
@@ -159,13 +156,9 @@ app.get('/user/:id', async (req, res) => {
 
                 }
 
-                res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
-                    maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
-                    httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-                    secure: true, // Cookie будут отправляться только по HTTPS
-                    sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-                })
-                // res.status(200).json(responseUser)
+                setCookie(res, refreshToken, timeRefToken)
+
+                res.status(200).json(responseUser)
                 return res.json(responseUser)
             } else{
                 //refreshToken неверен, нужно перелогиниться
@@ -193,13 +186,7 @@ app.get('/user/:id', async (req, res) => {
 
 //удаление Cookie с фронта при выходе из аккаунта
 app.post('/del-cookie', (req, res) => {
-
-    res.cookie('PDD_refreshToken', '', {
-        maxAge: -1, // Время жизни cookie в миллисекундах (15 минут)
-        httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-        secure: true, // Cookie будут отправляться только по HTTPS
-        sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-    });
+    delCookie(res)
     res.send('Cookie has been set!');
     console.log('DELETE_COOKIE')
 });
@@ -219,12 +206,7 @@ app.delete('/user/delete/:id', (req, res) => {
     if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')
         && verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
 
-        res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
-            maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
-            httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-            secure: true, // Cookie будут отправляться только по HTTPS
-            sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-        })
+        delCookie(res)
         db
             .collection('pdd_collection')
             .deleteOne({ _id: new ObjectId(req.params.id) })
@@ -234,12 +216,7 @@ app.delete('/user/delete/:id', (req, res) => {
                     .json(result)
             })
     } else {
-        res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
-            maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
-            httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-            secure: true, // Cookie будут отправляться только по HTTPS
-            sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-        })
+        delCookie(res)
         res.status(401).json(`result`)
     }
 })
@@ -250,12 +227,11 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
 
     const accessTokenFont = req.headers['authorization'];
     const cookies = Object.assign({}, req.cookies);
-    const refreshTokenFront = cookies.refreshToken
+    const refreshTokenFront = cookies.PDD_refreshToken
     //
     const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
     //
-
-    console.log(`\n###########\nreq.body: ${JSON.stringify(req.body)}\n#############\n`)
+    console.log(`\n###########\nreq.body: ${JSON.stringify(req.body)}\nrefreshTokenFront: ${refreshTokenFront}\n#############\n`)
 
     if(!user) return res.status(400).json({message: 'Пользователь не найден'})
 
@@ -286,7 +262,6 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
         return res.status(204).json({ message : 'No Content!'})
     } else {
     //
-
         if(verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
 
             await updateBD()
@@ -298,22 +273,11 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
                 { $set: { accessToken: accessToken, refreshToken: refreshToken } }
             )
 
-            res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
-                maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
-                httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-                secure: true, // Cookie будут отправляться только по HTTPS
-                sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-            })
+            setCookie(res, refreshToken, timeRefToken)
 
             return res.json({accessToken:accessToken})
         } else {
-
-            res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
-                maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
-                httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-                secure: true, // Cookie будут отправляться только по HTTPS
-                sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-            })
+            delCookie(res)
             return res.status(400).json({ message : 'Токен не совпадает'})
         }
     }
@@ -326,6 +290,8 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
     const accessTokenFont = req.headers['authorization'];
     const cookies = Object.assign({}, req.cookies);
     const refreshTokenFront = cookies.PDD_refreshToken
+
+    console.log(`\n###########\n/user/redactstar/:id\n-----------------------\nrefreshTokenFront: ${refreshTokenFront}\n#############\n`)
     //
     const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
 
@@ -372,22 +338,11 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
                 { $set: { accessToken: accessToken, refreshToken: refreshToken } }
             )
 
-            res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
-                maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
-                httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-                secure: true, // Cookie будут отправляться только по HTTPS
-                sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-            })
+            setCookie(res, refreshToken, timeRefToken)
 
             return res.json({accessToken:accessToken})
         } else {
-
-            res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
-                maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
-                httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-                secure: true, // Cookie будут отправляться только по HTTPS
-                sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-            })
+            delCookie(res)
             return res.status(400).json({ message : 'Токен не совпадает'})
         }
     }
@@ -408,7 +363,7 @@ app.patch('/user/settickets/:id', async (req, res)=>{
 
     // console.log(user)
 
-    async function updateBD(){+
+    async function updateBD(){
 
         console.log(`###########\n/user/settickets/:id\nbody: ${JSON.stringify(req.body)}\n###########\n`)
 
@@ -425,11 +380,6 @@ app.patch('/user/settickets/:id', async (req, res)=>{
 
         console.log(arr.examTiketsStatus)
 
-        // const arr = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
-        //
-        // console.log(`###########\n/user/settickets/:id\narr: ${JSON.stringify(arr.examTiketsStatus)}\n###########\n`)
-
-
     }
     //
     if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
@@ -438,35 +388,25 @@ app.patch('/user/settickets/:id', async (req, res)=>{
 
     } else {
 
-        // if(verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
-        //
-        //     await updateBD()
-        //
-        //     const accessToken = generateAccessToken(user._id, user.name);
-        //     const refreshToken = generateRefreshToken(user._id, user.name);
-        //
-        //     await db.collection('pdd_collection').updateOne({_id: new ObjectId (req.params.id)},
-        //         { $set: { accessToken: accessToken, refreshToken: refreshToken } }
-        //     )
-        //
-        //     res.cookie('PDD_refreshToken', refreshToken, { //ставим на фронт refreshToken
-        //         maxAge: 86400000, // Время жизни cookie в миллисекундах (24 часа)
-        //         httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-        //         secure: true, // Cookie будут отправляться только по HTTPS
-        //         sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-        //     })
-        //
-        //     return res.json({accessToken:accessToken})
-        // } else {
-        //
-        //     res.cookie('PDD_refreshToken', '', { //ставим на фронт refreshToken
-        //         maxAge: -1, // Время жизни cookie в миллисекундах (60 минут)
-        //         httpOnly: true, // Cookie доступны только на сервере (не через JavaScript на фронтенде)
-        //         secure: true, // Cookie будут отправляться только по HTTPS
-        //         sameSite: 'strict' // Ограничивает отправку cookie только для запросов с того же сайта
-        //     })
-        //     return res.status(400).json({ message : 'Токен не совпадает'})
-        // }
+        if(verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
+
+            await updateBD()
+
+            const accessToken = generateAccessToken(user._id, user.name);
+            const refreshToken = generateRefreshToken(user._id, user.name);
+
+            await db.collection('pdd_collection').updateOne({_id: new ObjectId (req.params.id)},
+                { $set: { accessToken: accessToken, refreshToken: refreshToken } }
+            )
+
+            setCookie(res, refreshToken, timeRefToken)
+
+            return res.json({accessToken:accessToken})
+        } else {
+
+            delCookie(res)
+            return res.status(400).json({ message : 'Токен не совпадает'})
+        }
     }
 })
 // ...окраска кнопки правильного или неправильного решенного билета
