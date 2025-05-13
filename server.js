@@ -227,8 +227,18 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
 
     async function updateBD(){
 
+
+
         if(req.body.correct){
             if(req.body.wind==='error'){
+
+
+                await db
+                    .collection('pdd_collection')
+                    .updateOne(
+                        { _id: new ObjectId(req.params.id) },
+                        { $pull: { errorQuestions: req.body.id } }
+                    )
                 console.log('DELETE ERROR ARR')
                 //удаление вопроса из списка ошибочных
             }
