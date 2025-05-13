@@ -118,6 +118,7 @@ app.post('/user/login', async (req, res) => {
 });
 //...авторизация
 
+
 //получение данных акка...
 app.get('/user/:id', async (req, res) => {
     try {
@@ -227,6 +228,10 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
     async function updateBD(){
 
         if(req.body.correct){
+            if(req.body.wind==='error'){
+                console.log('DELETE ERROR ARR')
+                //удаление вопроса из списка ошибочных
+            }
             console.log(`\n###########\nThe right answer\n#############\n`)
         } else {
             console.log(`\n###########\nThe wrong answer\n#############\n`)
