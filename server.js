@@ -47,33 +47,39 @@ app.post('/user/register', (req, res) => {
       .findOne( { name:req.body.name } )
       .then(doc => {
         if(doc){
+
           console.log(1, `Имя ${req.body.name} занято`)
-          res
+          return res
               .status(409)
-              .json('имя занято')
+              .json({message : 'имя занято'})
+
         } else {
           console.log(2, `Имя ${req.body.name} свободно`)
-          db
-              .collection('pdd_collection')
-              .insertOne(req.body)
-              .then((result)=>{
-                db.collection('pdd_collection').updateOne({ _id: result.insertedId }, {
-                  $set: {
-                    pathImg: '',
-                    refreshToken: '',
-                    accessToken: '',
-                    creatDat: new Date(),
-                    starQuestions:[],
-                    errorQuestions:[],
-                    examTiketsStatus:[{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'},{color:'none'}]
-                  } }) //добавление токена и даты создания
-                res
-                    .status(201)
-                    .json("Created")
-              })
+
+            const userData = {
+                name: req.body.name,
+                password: req.body.password,
+                pathImg: '',
+                refreshToken: '',
+                accessToken: '',
+                creatDat: new Date(),
+                starQuestions: [],
+                errorQuestions: [],
+                examTiketsStatus: Array(40).fill({ color: 'none' })
+            };
+
+            db.collection('pdd_collection').insertOne(userData)
+
+            return res.status(201).json({
+                message:'The account was created',
+            });
+
         }
       })
-      .catch(()=> handleError(res, 'Something went wrong.'))
+      .catch(err => {
+          console.error('Ошибка регистрации:', err);
+          res.status(500).json('Something went wrong.');
+      });
 })
 //...регистрация
 
