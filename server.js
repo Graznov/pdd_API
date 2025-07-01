@@ -188,7 +188,7 @@ app.post('/del-cookie', (req, res) => {
 });
 //удаление Cookie с фронта при выходе из аккаунта+
 
-//Удаление аккаунта:
+//Удаление аккаунта:+
 app.delete('/user/delete/:id', (req, res) => {
 
     const accessTokenFont = req.headers['authorization'];
@@ -216,7 +216,7 @@ app.delete('/user/delete/:id', (req, res) => {
         res.status(401).json(`result`)
     }
 })
-//...удаление аккаунта
+//...удаление аккаунта+
 
 //Добавление ошибочного вопроса в список ошибок
 app.patch('/user/pusherror/:id', async (req, res)=>{
@@ -232,8 +232,6 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
     if(!user) return res.status(400).json({message: 'Пользователь не найден'})
 
     async function updateBD(){
-
-
 
         if(req.body.correct){
             if(req.body.wind==='error'){
