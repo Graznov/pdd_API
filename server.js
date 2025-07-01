@@ -218,7 +218,7 @@ app.delete('/user/delete/:id', (req, res) => {
 })
 //...удаление аккаунта+
 
-//Добавление ошибочного вопроса в список ошибок
+//Добавление ошибочного вопроса в список ошибок+
 app.patch('/user/pusherror/:id', async (req, res)=>{
 
     const accessTokenFont = req.headers['authorization'];
@@ -290,7 +290,7 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
         }
     }
 })
-// ...Добавление ошибочного вопроса в список ошибок
+// ...Добавление ошибочного вопроса в список ошибок+
 
 //Добавление и удаление вопроса из избранного
 app.patch('/user/redactstar/:id', async (req, res)=>{
