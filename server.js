@@ -40,7 +40,7 @@ const handleError = (res, error) => {
 
 const timeRefToken = 604800000 //Время жизни cookie в миллисекундах (7 суток)
 
-//регистрация...
+//регистрация...+
 app.post('/user/register', (req, res) => {
   db
       .collection('pdd_collection')
@@ -81,9 +81,9 @@ app.post('/user/register', (req, res) => {
           res.status(500).json('Something went wrong.');
       });
 })
-//...регистрация
+//...регистрация+
 
-//Авторизация...
+//Авторизация...+
 app.post('/user/login', async (req, res) => {
 
     const { name, password } = req.body;
@@ -122,7 +122,7 @@ app.post('/user/login', async (req, res) => {
     }
 
 });
-//...авторизация
+//...авторизация+
 
 
 //получение данных акка...
