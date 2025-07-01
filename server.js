@@ -125,7 +125,7 @@ app.post('/user/login', async (req, res) => {
 //...авторизация+
 
 
-//получение данных акка...
+//получение данных акка...+
 app.get('/user/:id', async (req, res) => {
     try {
         const accessToken = req.headers['authorization'];
@@ -178,15 +178,15 @@ app.get('/user/:id', async (req, res) => {
         res.status(500).json({ message: 'Ошибка сервера' });
     }
 });
-//...получение данных акка
+//...получение данных акка+
 
-//удаление Cookie с фронта при выходе из аккаунта
+//удаление Cookie с фронта при выходе из аккаунта+
 app.post('/del-cookie', (req, res) => {
     delCookie(res)
     res.send('Cookie has been set!');
     console.log('DELETE_COOKIE')
 });
-//удаление Cookie с фронта при выходе из аккаунта
+//удаление Cookie с фронта при выходе из аккаунта+
 
 //Удаление аккаунта:
 app.delete('/user/delete/:id', (req, res) => {
