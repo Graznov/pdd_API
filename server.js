@@ -303,7 +303,7 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
     //
     const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
 
-    if(!user) return res.status(400).json({message: 'Пользователь не найден'})
+    if(!user) return res.status(404).json({message: 'Пользователь не найден'})
 
     async function updateBD(){
         let arr = await db
@@ -331,7 +331,7 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
     if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
         await updateBD()
         // return res.status(204).json({ message : 'No Content!'})
-        return res.status(204)
+        return res.status(204).json({message:'Ok!!!'})
 
     } else {
 
@@ -348,7 +348,7 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
 
             setCookie(res, refreshToken, timeRefToken)
 
-            return res.json({accessToken:accessToken})
+            return res.status(200).json({accessToken:accessToken})
         } else {
             delCookie(res)
             return res.status(400).json({ message : 'Токен не совпадает'})
