@@ -65,7 +65,9 @@ app.post('/user/register', (req, res) => {
                 creatDat: new Date(),
                 starQuestions: [],
                 errorQuestions: [],
-                examTiketsStatus: Array(40).fill({ color: 'none' })
+                examTiketsStatus: Array(40).fill({ color: 'none' }),
+                // marafon: Array(800).fill({ id:'', response:null, }),
+                // marafon:[]
             };
 
             db.collection('pdd_collection').insertOne(userData)
