@@ -67,7 +67,7 @@ app.post('/user/register', (req, res) => {
                 errorQuestions: [],
                 examTiketsStatus: Array(40).fill({ color: 'none' }),
                 // marafon: Array(800).fill({ id:'', response:null, }),
-                // marafon:[]
+                marafon:[]
             };
 
             db.collection('pdd_collection').insertOne(userData)
@@ -96,6 +96,7 @@ app.post('/user/login', async (req, res) => {
         const user = await db.collection('pdd_collection').findOne({ name: name, password: password });
         if(!user) return res.status(400).json({ message: 'Пользователь не найден' })
 
+        console.log(user.marafon)
         const accessToken = generateAccessToken(user._id, name);
         const refreshToken = generateRefreshToken(user._id, name);
 
@@ -112,6 +113,7 @@ app.post('/user/login', async (req, res) => {
             starQuestions:user.starQuestions,
             errorQuestions:user.errorQuestions,
             examTiketsStatus:user.examTiketsStatus,
+            marafon:user.marafon
         };
 
         setCookie(res, refreshToken, timeRefToken)
@@ -263,6 +265,39 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
                     .collection('pdd_collection')
                     .updateOne({_id: new ObjectId (req.params.id)}, {$push: {errorQuestions: req.body.id}} )
             }
+        }
+
+        if(req.body.wind==='marafon'){
+            console.log('MARAFON')
+            console.log(req.body)
+
+            const data = await db
+                .collection('pdd_collection')
+                .findOne({_id: new ObjectId (req.params.id)})
+
+            const arr = data.marafon
+
+            for(let i=0; i<arr.length-1;i++){
+                console.log(i)
+
+                if(arr[i].id === req.body.id){
+                    arr[i].response = true
+                    arr[i].status = (!req.body.correct)?'red':'green'
+                    arr[i].yourResponse = req.body.yourResponse
+                    console.log(arr[i])
+
+                    break
+                }
+            }
+
+            await db
+                .collection('pdd_collection')
+                .updateOne(
+                    { _id: new ObjectId(req.params.id) },
+                    { $set: {marafon:arr} }
+                )
+
+
         }
 
     }
@@ -420,3 +455,102 @@ app.patch('/user/settickets/:id', async (req, res)=>{
     }
 })
 // ...окраска кнопки правильного или неправильного решенного билета
+
+//Создание массива статусов марафона
+app.patch('/user/startmarafon/:id', async (req, res)=>{
+
+    const accessTokenFont = req.headers['authorization'];
+    const cookies = Object.assign({}, req.cookies);
+    const refreshTokenFront = cookies.PDD_refreshToken
+    //
+    const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
+    //
+
+    if(!user) return res.status(400).json({message: 'Пользователь не найден'})
+
+    async function updateBD(){
+
+                await db
+                    .collection('pdd_collection')
+                    .updateOne(
+                        { _id: new ObjectId(req.params.id) },
+                        { $set: {marafon:req.body} }
+                    )
+
+    }
+    //
+    if(verifyJWT(accessTokenFont, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessT')){
+        await updateBD()
+        return res.status(204).json({ message : 'No Content!'})
+    } else {
+        //
+        if(verifyJWT(refreshTokenFront, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')){
+
+            await updateBD()
+
+            const accessToken = generateAccessToken(user._id, user.name);
+            const refreshToken = generateRefreshToken(user._id, user.name);
+
+            await db.collection('pdd_collection').updateOne({_id: new ObjectId (req.params.id)},
+                { $set: { accessToken: accessToken, refreshToken: refreshToken } }
+            )
+
+            setCookie(res, refreshToken, timeRefToken)
+
+            return res.json({accessToken:accessToken})
+        } else {
+            delCookie(res)
+            return res.status(400).json({ message : 'Токен не совпадает'})
+        }
+    }
+})
+//Создание массива статусов марафона
+
+//получение данных марафона
+app.get('/user/setmarafon/:id', async (req, res) => {
+    try {
+        const accessToken = req.headers['authorization'];
+        const cookies = Object.assign({}, req.cookies);
+        const refreshToken = cookies.PDD_refreshToken;
+
+        // console.log(`accessToken: ${accessToken}\nrefreshToken: ${refreshToken}`);
+
+        const user = await db.collection('pdd_collection').findOne({ _id: new ObjectId(req.params.id) });
+        if (!user) return res.status(400).json({ message: 'Пользователь не найден' });
+
+        const responseUser = user.marafon;
+
+        // console.log(responseUser)
+
+
+        if (!accessToken) {
+            return res.status(401).json({ message: 'Токен отсутствует' });
+        }
+
+        if (verifyJWT(accessToken, process.env.VERY_VERY_SECRET_FOR_ACCESS, 'AccessToken')) {
+            return res.status(200).json(responseUser);
+        } else {
+            if (verifyJWT(refreshToken, process.env.VERY_VERY_SECRET_FOR_REFRESH, 'RefreshToken')) {
+                // console.log(`refreshToken GOOD`);
+                const newAccessToken = generateAccessToken(user._id, user.email);
+                const newRefreshToken = generateRefreshToken(user._id, user.email);
+
+                await db.collection('pdd_collection').updateOne(
+                    { _id: new ObjectId(req.params.id) },
+                    { $set: { accessToken: newAccessToken, refreshToken: newRefreshToken } }
+                );
+
+                setCookie(res, newRefreshToken, timeRefToken);
+                responseUser.accessToken = newAccessToken;
+
+                return res.status(200).json(responseUser);
+            } else {
+                return res.status(400).json({ message: 'Токен не совпадает' });
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка при входе:', error);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+//получение данных марафона
