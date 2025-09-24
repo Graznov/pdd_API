@@ -174,6 +174,9 @@ app.get('/user/:id', async (req, res) => {
 
                 return res.status(200).json(responseUser);
             } else {
+
+                delCookie(res)
+
                 return res.status(400).json({ message: 'Токен не совпадает' });
             }
         }
