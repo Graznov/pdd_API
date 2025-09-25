@@ -96,7 +96,7 @@ app.post('/user/login', async (req, res) => {
         const user = await db.collection('pdd_collection').findOne({ name: name, password: password });
         if(!user) return res.status(400).json({ message: 'Пользователь не найден' })
 
-        console.log(user.marafon)
+        // console.log(user.marafon)
         const accessToken = generateAccessToken(user._id, name);
         const refreshToken = generateRefreshToken(user._id, name);
 
