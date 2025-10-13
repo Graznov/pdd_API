@@ -253,9 +253,10 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
                 console.log('DELETE ERROR ARR')
                 //удаление вопроса из списка ошибочных
             }
-            console.log(`\n###########\nThe right answer\n#############\n`)
+            console.log(`\n#############\n#           #\n#   The     #\n#   RIGHT   #\n#   answer  #\n#           #\n#############\n`)
         } else {
-            console.log(`\n###########\nThe wrong answer\n#############\n`)
+            console.log(`\n#############\n#           #\n#   The     #\n#   WRONG   #\n#   answer  #\n#           #\n#############\n`)
+
 
             const arr = await db
                 .collection('pdd_collection')
@@ -339,8 +340,8 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
     const cookies = Object.assign({}, req.cookies);
     const refreshTokenFront = cookies.PDD_refreshToken
 
-    console.log(`\n###########\n/user/redactstar/:id\n-----------------------\nrefreshTokenFront: ${refreshTokenFront}\n#############\n`)
-    //
+    // console.log(`\n###########\n/user/redactstar/:id\n-----------------------\nrefreshTokenFront: ${refreshTokenFront}\n#############\n`)
+
     const user = await db.collection('pdd_collection').findOne({_id: new ObjectId (req.params.id)})
 
     if(!user) return res.status(404).json({message: 'Пользователь не найден'})
@@ -358,9 +359,9 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
             await db
                 .collection('pdd_collection')
                 .updateOne({_id: new ObjectId (req.params.id)}, {$set: {starQuestions: res}} )
-            console.log(`Answ id: ${req.body.id} DELETE in starQuestions`)
+            console.log(`\n###############\n#  Answ id: ${req.body.id}\n#  DELETE in starQuestions\n###############\n`)
         } else {
-            console.log(`Answ id: ${req.body.id} PUSH in starQuestions`)
+            console.log(`\n###############\n#  Answ id: ${req.body.id}\n#  PUSH in starQuestions\n###############\n`)
 
             await db
                 .collection('pdd_collection')
@@ -388,7 +389,7 @@ app.patch('/user/redactstar/:id', async (req, res)=>{
 
             setCookie(res, refreshToken, timeRefToken)
 
-            return res.status(200).json({accessToken:accessToken})
+            return res.status(200).json({accessToken:accessToken,message:'OK'})
         } else {
             delCookie(res)
             return res.status(400).json({ message : 'Токен не совпадает'})
