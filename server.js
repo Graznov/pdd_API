@@ -225,6 +225,7 @@ app.delete('/user/delete/:id', (req, res) => {
 })
 //...удаление аккаунта+
 
+
 //Добавление ошибочного вопроса в список ошибок+
 app.patch('/user/pusherror/:id', async (req, res)=>{
 
@@ -273,22 +274,20 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
 
         if(req.body.wind==='marafon'){
             console.log('MARAFON')
-            console.log(req.body)
+            console.log(`req.body:`, req.body)
 
             const data = await db
                 .collection('pdd_collection')
                 .findOne({_id: new ObjectId (req.params.id)})
 
             const arr = data.marafon
-
-            for(let i=0; i<arr.length-1;i++){
-                console.log(i)
+            
+            for(let i=0; i<=arr.length-1;i++){
 
                 if(arr[i].id === req.body.id){
                     arr[i].response = true
                     arr[i].status = (!req.body.correct)?'red':'green'
                     arr[i].yourResponse = req.body.yourResponse
-                    console.log(arr[i])
 
                     break
                 }
@@ -300,7 +299,6 @@ app.patch('/user/pusherror/:id', async (req, res)=>{
                     { _id: new ObjectId(req.params.id) },
                     { $set: {marafon:arr} }
                 )
-
 
         }
 
@@ -558,3 +556,18 @@ app.get('/user/setmarafon/:id', async (req, res) => {
     }
 });
 //получение данных марафона
+
+
+function getFormattedDateTime() { //Вывод времени
+    const now = new Date();
+
+    // Получаем компоненты даты и времени
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+
+    return `${hours}:${minutes}:${seconds},${day}.${month}.${year}`;
+}
